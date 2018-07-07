@@ -1,0 +1,8 @@
+[package]
+authors = ["Mathieu Amiot <mathieui.amiot@yellowinnovation.fr>"]
+name = "actix-redis-client"
+version = "0.1.0"
+
+[dependencies]
+redis = "0.8.0"
+actix = "0.5.8"
