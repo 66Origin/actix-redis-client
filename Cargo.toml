@@ -1,8 +1,20 @@
 [package]
-authors = ["Mathieu Amiot <mathieui.amiot@yellowinnovation.fr>"]
 name = "actix-redis-client"
 version = "0.1.0"
+authors = ["Mathieu Amiot <mathieu.amiot@yellowinnovation.fr>"]
+license = "MIT/Apache-2.0"
+description = "Actix actor for redis-rs"
+readme = "README.md"
+documentation = "https://docs.rs/actix-redis-client"
+homepage = "https://github.com/YellowInnovation/actix-redis-client"
+repository = "https://github.com/YellowInnovation/actix-redis-client"
+keywords = ["web", "redis", "async", "actix", "tokio"]
+categories = ["network-programming", "asynchronous"]
+include = [
+    "**/*.rs",
+    "Cargo.toml"
+]
 
 [dependencies]
-redis = "0.8.0"
-actix = "0.5.8"
+redis = "~0.8.0"
+actix = "~0.5.8"
