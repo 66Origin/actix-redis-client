@@ -1,19 +1,14 @@
+#![warn(clippy)]
 extern crate actix;
 pub extern crate redis;
 
 use actix::prelude::*;
-pub use redis::Cmd;
-
 use std::marker::PhantomData;
 
-#[macro_export]
-macro_rules! redis_cmd {
-    ($cmd: expr, $($args:expr),* ) => ({
-        use redis::cmd;
-        cmd($cmd.into())
-            $(.arg($args.into()))*
-    })
-}
+mod error;
+pub use self::error::*;
+
+pub type ActixRedisClientResult<T> = Result<T, ActixRedisClientError>;
 
 pub struct Command<T> {
     cmd: redis::Cmd,
@@ -21,7 +16,7 @@ pub struct Command<T> {
 }
 
 impl<T> Command<T> {
-    pub fn new(cmd: Cmd) -> Self {
+    pub fn new(cmd: redis::Cmd) -> Self {
         Command {
             cmd,
             _marker: PhantomData::default(),
@@ -29,21 +24,35 @@ impl<T> Command<T> {
     }
 }
 
-impl<T> Message for Command<T> {
-    type Result = Result<T, redis::RedisError>;
+impl<T: 'static> Message for Command<T> {
+    type Result = ActixRedisClientResult<T>;
 }
 
-pub struct RedisExecutorSync(Box<redis::ConnectionLike>);
+pub struct RedisExecutorSync(redis::Client);
 impl RedisExecutorSync {
-    fn new(client: Box<redis::ConnectionLike>) -> Self {
+    fn new(client: redis::Client) -> Self {
         RedisExecutorSync(client)
     }
 
     pub fn start<F>(threads: usize, client_factory: F) -> Addr<Syn, Self>
     where
-        F: Fn() -> redis::ConnectionLike + Send + Sync + 'static,
+        F: Fn() -> redis::Client + Send + Sync + 'static,
     {
         SyncArbiter::start(threads, move || Self::new(client_factory()))
+    }
+
+    pub fn get_connection(&self) -> Result<redis::Connection, ActixRedisClientError> {
+        match self.0.get_connection() {
+            Ok(v) => Ok(v),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub fn get_pubsub(&self) -> Result<redis::PubSub, ActixRedisClientError> {
+        match self.0.get_pubsub() {
+            Ok(v) => Ok(v),
+            Err(e) => Err(e.into()),
+        }
     }
 }
 
@@ -51,19 +60,13 @@ impl Actor for RedisExecutorSync {
     type Context = SyncContext<Self>;
 }
 
-impl<T> Handler<Command<T>> for RedisExecutorSync {
-    type Result = Result<T, redis::RedisError>;
+impl<T: redis::FromRedisValue + 'static> Handler<Command<T>> for RedisExecutorSync {
+    type Result = ActixRedisClientResult<T>;
 
     fn handle(&mut self, cmd: Command<T>, _: &mut Self::Context) -> Self::Result {
-        cmd.query(self.0)
-    }
-}
-
-impl Handler<RequestWithReply> for NATSExecutorSync {
-    type Result = Result<Vec<u8>, nats::NatsError>;
-
-    fn handle(&mut self, mut msg: RequestWithReply, _: &mut Self::Context) -> Self::Result {
-        msg.inbox = Some(self.0.make_request(&msg.subject, &msg.data)?);
-        Ok(self.0.wait()?.msg.into())
+        match cmd.cmd.query(&mut self.0) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(e.into()),
+        }
     }
 }
