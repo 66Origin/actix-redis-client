@@ -1,4 +1,3 @@
-#![warn(clippy)]
 extern crate actix;
 pub extern crate redis;
 
@@ -64,7 +63,7 @@ impl<T: redis::FromRedisValue + 'static> Handler<Command<T>> for RedisExecutorSy
     type Result = ActixRedisClientResult<T>;
 
     fn handle(&mut self, cmd: Command<T>, _: &mut Self::Context) -> Self::Result {
-        match cmd.cmd.query(&mut self.0) {
+        match cmd.cmd.query(&self.0) {
             Ok(v) => Ok(v),
             Err(e) => Err(e.into()),
         }
