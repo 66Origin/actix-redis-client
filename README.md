@@ -15,7 +15,7 @@ Here: [http://docs.rs/actix-redis-client](http://docs.rs/actix-redis-client)
 
 ```toml
 [dependencies]
-actix-redis-client = "0.3"
+actix-redis-client = "0.1"
 ```
 
 ## License
