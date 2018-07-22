@@ -9,7 +9,7 @@ documentation = "https://docs.rs/actix-redis-client"
 homepage = "https://github.com/YellowInnovation/actix-redis-client"
 repository = "https://github.com/YellowInnovation/actix-redis-client"
 keywords = ["web", "redis", "async", "actix", "tokio"]
-categories = ["network-programming", "asynchronous"]
+categories = ["network-programming", "asynchronous", "web"]
 include = [
     "**/*.rs",
     "Cargo.toml"
@@ -17,4 +17,5 @@ include = [
 
 [dependencies]
 redis = "~0.8.0"
-actix = "~0.5.8"
+actix = "~0.7.1"
+failure = "0.1.1"

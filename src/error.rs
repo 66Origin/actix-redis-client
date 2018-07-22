@@ -1,39 +1,31 @@
 use actix::MailboxError;
 use redis::RedisError;
-use std::fmt;
 
-#[derive(Debug, Clone)]
-pub struct ActixRedisClientError(String);
-
-unsafe impl Sync for ActixRedisClientError {}
-unsafe impl Send for ActixRedisClientError {}
-
-impl fmt::Display for ActixRedisClientError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0)
-    }
+/// Error type
+#[derive(Debug, Fail)]
+pub enum ActixRedisClientError {
+    #[fail(display = "Actor is dead | MailboxError {}", _0)]
+    MailboxError(MailboxError),
+    #[fail(display = "Redis error | RedisError {}", _0)]
+    RedisError(RedisError),
+    #[fail(display = "Unknown error | {}", _0)]
+    Unknown(&'static str),
 }
 
 impl From<&'static str> for ActixRedisClientError {
     fn from(s: &'static str) -> Self {
-        ActixRedisClientError(String::from(s))
-    }
-}
-
-impl From<String> for ActixRedisClientError {
-    fn from(s: String) -> Self {
-        ActixRedisClientError(s.clone())
+        ActixRedisClientError::Unknown(s)
     }
 }
 
 impl From<MailboxError> for ActixRedisClientError {
     fn from(e: MailboxError) -> Self {
-        ActixRedisClientError(format!("{}", e))
+        ActixRedisClientError::MailboxError(e)
     }
 }
 
 impl From<RedisError> for ActixRedisClientError {
     fn from(e: RedisError) -> Self {
-        ActixRedisClientError(format!("{}", e))
+        ActixRedisClientError::RedisError(e)
     }
 }
